@@ -12,6 +12,7 @@ bot = Bot(token)
 
 dp = Dispatcher(bot, storage=MemoryStorage())
 
+
 class NameForm(StatesGroup):
     await_name = State()
 
@@ -32,7 +33,6 @@ async def cmd_start(message: types.Message):
     await cmd_help(message)
 
     await NameForm.await_name.set()
-
 
 
 @dp.message_handler(commands="help")
@@ -68,7 +68,6 @@ async def echo_message(message: types.Message):
         message (types.Message): message sent by the user.
     """
     await bot.send_message(message.from_user.id, message.text)
-
 
 
 if __name__ == "__main__":
