@@ -8,13 +8,23 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from bottoken import token
 
+import psycopg2
+
+
+conn = psycopg2.connect(dbname='postgres', user='bot',
+                        password='bot', host='localhost')
+cursor = conn.cursor()
+
 bot = Bot(token)
 
 dp = Dispatcher(bot, storage=MemoryStorage())
 
+commands = ['/help', '/start']
+
 
 class NameForm(StatesGroup):
     await_name = State()
+    all_commands = State()
 
 
 @dp.message_handler(commands="start")
@@ -31,6 +41,7 @@ async def cmd_start(message: types.Message):
                          "Let me dig up some useful information... "
                          "Just a sec")
     await cmd_help(message)
+    await message.answer("Введи свое имя")
 
     await NameForm.await_name.set()
 
@@ -50,14 +61,42 @@ async def cmd_help(message: types.Message):
 
 
 @dp.message_handler(content_types=['text'], state=NameForm.await_name)
-async def name_getter(message: types.Message):
+async def name_getter(message: types.Message, state: FSMContext):
     """Function to handle random text messages.
     Echo message is sent back to user.
     Args:
         message (types.Message): message sent by the user.
+        :param message:
+        :param state:
     """
-    # add name to db
-    await bot.send_message(message.from_user.id,'Вы в группе прошмандовки лабы: ' + message.text)
+    user_id = message.from_user.id
+    user_name = message.text
+
+    if not user_exists(user_id):
+
+        if any(command in user_name for command in commands):
+            await bot.send_message(message.from_user.id, 'Это команды, а я хочу от тебя имя')
+            return
+        else:
+            table_name = "cupbot.user"
+            cursor.execute("insert into %s values (%%s, %%s)" % table_name, [user_id, user_name])
+            conn.commit()
+            await bot.send_message(message.from_user.id, 'Привет, ' + message.text + ', начнем игру?)')
+    else:
+        await bot.send_message(message.from_user.id, 'Привет??')
+        await bot.send_message(message.from_user.id, 'Неси свои проигрыши гордо под своим первым никнеймом, '
+                                                     'мелкий угонщик')
+        # TODO можно проверить что был введен тот же никнейм и накатать другой месседж
+
+    await state.finish()
+
+
+def user_exists(user_id: str):
+    cursor.execute('select * from cupbot.user where id = %s', [str(user_id)])
+    users = cursor.fetchall()
+    if not users:
+        return False
+    return True
 
 
 @dp.message_handler(content_types=['text'])
@@ -73,3 +112,6 @@ async def echo_message(message: types.Message):
 if __name__ == "__main__":
     # Запуск бота
     executor.start_polling(dp, skip_updates=True)
+
+    cursor.close()
+    conn.close()
