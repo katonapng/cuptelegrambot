@@ -1,1 +1,3 @@
 # cuptelegrambot
+
+IT course project
