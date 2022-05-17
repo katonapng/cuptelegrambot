@@ -1,6 +1,3 @@
-import logging
-import os
-
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -8,6 +5,8 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from bottoken import token
 from disk import get_pictures
+
+from game import get_active_game, end_active_game
 
 import psycopg2
 
@@ -50,23 +49,6 @@ async def cmd_start(message: types.Message):
     await NameForm.await_name.set()
 
 
-@dp.message_handler(commands="help")
-async def cmd_help(message: types.Message):
-    """Function to handle /help command.
-    Message with all available commands is sent
-    to the user.
-    Args:
-        message (types.Message): message sent by the user.
-    """
-    await message.answer("Here you go, all the requests you can ask of me\n"
-                         "If I'm in the mood, i shall answer you:\n"
-                         "/start - begin interaction\n"
-                         "/help - get all available requests\n"
-                         "Помни - за тобой следят!")
-    pic_path = get_pictures()[0]
-    await bot.send_photo(message.chat.id, pic_path)
-
-
 @dp.message_handler(content_types=['text'], state=NameForm.await_name)
 async def name_getter(message: types.Message, state: FSMContext):
     """Function to handle random text messages.
@@ -89,13 +71,38 @@ async def name_getter(message: types.Message, state: FSMContext):
             cursor.execute("insert into %s values (%%s, %%s)" % table_name, [user_id, user_name])
             conn.commit()
             await bot.send_message(message.from_user.id, 'Привет, ' + message.text + ', начнем игру?)')
+            await NameForm.all_set_for_game.set()
     else:
         await bot.send_message(message.from_user.id, 'Привет??')
         await bot.send_message(message.from_user.id, 'Неси свои проигрыши гордо под своим первым никнеймом, '
                                                      'мелкий угонщик')
+
+        # TODO after restarting bot
+        # if no active_games -> state game
+        # if active_games -> standart function end_game: stop prev game + change state to all_set_for_game
+        if await get_active_game(message.from_user.id) == -1:  # no active games
+            await NameForm.all_set_for_game.set()
+        else:
+            await end_active_game(message.from_user.id)
+
         # TODO check for same nickname as prev and create new shaming msg
 
-    await state.finish()
+
+@dp.message_handler(commands="help", state='*')
+async def cmd_help(message: types.Message):
+    """Function to handle /help command.
+    Message with all available commands is sent
+    to the user.
+    Args:
+        message (types.Message): message sent by the user.
+    """
+    await message.answer("Here you go, all the requests you can ask of me\n"
+                         "If I'm in the mood, i shall answer you:\n"
+                         "/start - begin interaction\n"
+                         "/help - get all available requests\n"
+                         "Помни - за тобой следят!")
+    pic_path = get_pictures()[0]
+    await bot.send_photo(message.chat.id, pic_path)
 
 
 def user_exists(user_id: str):
@@ -106,7 +113,7 @@ def user_exists(user_id: str):
     return True
 
 
-@dp.message_handler(content_types=['text'])
+@dp.message_handler(content_types=['text'], state='*')
 async def echo_message(message: types.Message):
     """Function to handle random text messages.
     Echo message is sent back to user.
