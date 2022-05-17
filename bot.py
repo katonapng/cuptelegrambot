@@ -1,33 +1,12 @@
-from aiogram import Bot, Dispatcher, executor, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram import executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from bottoken import token
 from disk import get_pictures
-
-from game import get_active_game, end_active_game
-
-import psycopg2
-
-conn = psycopg2.connect(dbname='postgres', user='bot',
-                        password='bot', host='localhost')
-cursor = conn.cursor()
-
-bot = Bot(token)
-
-dp = Dispatcher(bot, storage=MemoryStorage())
+from game import get_active_game, end_active_game, send_start_game_button, \
+    send_end_game_button
+from connections import conn, cursor, bot, dp, NameForm
 
 commands = ['/help', '/start']
-
-
-class NameForm(StatesGroup):
-    # waiting for user to enter his/her/... name
-    await_name = State()
-    # registered user, no active games == all set for a new game
-    all_set_for_game = State()
-    # registered user, active game
-    gaming = State()
 
 
 @dp.message_handler(commands="start")
@@ -70,8 +49,13 @@ async def name_getter(message: types.Message, state: FSMContext):
             table_name = "cupbot.user"
             cursor.execute("insert into %s values (%%s, %%s)" % table_name, [user_id, user_name])
             conn.commit()
-            await bot.send_message(message.from_user.id, 'Привет, ' + message.text + ', начнем игру?)')
+
+            # await bot.send_message(message.from_user.id, 'Привет, ' + message.text + ', начнем игру?)', reply_markup=keyboard_markup)
+            # await message.reply("Hi!\nWhich one?", reply_markup=keyboard_markup)
+
             await NameForm.all_set_for_game.set()
+            await send_start_game_button(message.from_user.id, 'Привет, ' + message.text + ', начнем игру?)')
+
     else:
         await bot.send_message(message.from_user.id, 'Привет??')
         await bot.send_message(message.from_user.id, 'Неси свои проигрыши гордо под своим первым никнеймом, '
@@ -105,6 +89,41 @@ async def cmd_help(message: types.Message):
     await bot.send_photo(message.chat.id, pic_path)
 
 
+# EXAMPLE FOR FUTURE
+@dp.callback_query_handler(Text(contains='hidden'), state=NameForm.gaming)
+async def inline_kb_answer_callback_handler_cup(query: types.CallbackQuery):
+    answer_data = query.data
+    # always answer callback queries, even if you have nothing to say
+    await query.answer(f'You answered with {answer_data!r}')
+
+    if answer_data == '1':
+        text = 'Great, me too!'
+    elif answer_data == '2':
+        text = 'Oh no...Why so?'
+    else:
+        text = f'Unexpected callback data {answer_data!r}!'
+
+    await bot.send_message(query.from_user.id, answer_data)
+
+
+@dp.callback_query_handler(Text(equals='start_new_game'), state=NameForm.all_set_for_game)
+async def inline_kb_answer_callback_handler_new_game(query: types.CallbackQuery):
+    # always answer callback queries, even if you have nothing to say
+    await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+
+    await NameForm.gaming.set()
+    await bot.send_message(query.from_user.id, 'Дэмн, удачи!!')
+    # TODO send cups and inline keyboard to select one of them
+
+
+@dp.callback_query_handler(Text(equals='end_game'), state=NameForm.gaming)
+async def inline_kb_answer_callback_handler_new_game(query: types.CallbackQuery):
+    # always answer callback queries, even if you have nothing to say
+    await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+    await NameForm.all_set_for_game.set()
+    await bot.send_message(query.from_user.id, 'В следующий раз улов будет получше!!')
+
+
 def user_exists(user_id: str):
     cursor.execute('select * from cupbot.user where id = %s', [str(user_id)])
     users = cursor.fetchall()
@@ -113,12 +132,37 @@ def user_exists(user_id: str):
     return True
 
 
+@dp.message_handler(content_types=['text'], state=NameForm.all_set_for_game)
+async def echo_message_nogame_state(message: types.Message, state: FSMContext):
+    """Function to handle random text messages in all_set_for_gae state
+    Start new game message is sent back to user.
+    Args:
+        message (types.Message): message sent by the user.
+        :param message:
+        :param state:
+    """
+    await send_start_game_button(message.from_user.id, 'У тебя только один путь гордого самура - угон кружек')
+
+
+@dp.message_handler(content_types=['text'], state=NameForm.gaming)
+async def echo_message_game_state(message: types.Message, state: FSMContext):
+    """Function to handle random text messages in all_set_for_gae state
+    Start new game message is sent back to user.
+    Args:
+        message (types.Message): message sent by the user.
+        :param message:
+        :param state:
+    """
+    await send_end_game_button(message.from_user.id, 'Угон не задался?')
+
+
 @dp.message_handler(content_types=['text'], state='*')
-async def echo_message(message: types.Message):
+async def echo_message(message: types.Message, state: FSMContext):
     """Function to handle random text messages.
     Echo message is sent back to user.
     Args:
         message (types.Message): message sent by the user.
+        :param state:
     """
     await bot.send_message(message.from_user.id, message.text)
 
