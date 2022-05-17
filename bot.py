@@ -7,6 +7,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from bottoken import token
+from disk import get_pictures
 
 import psycopg2
 
@@ -60,7 +61,10 @@ async def cmd_help(message: types.Message):
     await message.answer("Here you go, all the requests you can ask of me\n"
                          "If I'm in the mood, i shall answer you:\n"
                          "/start - begin interaction\n"
-                         "/help - get all available requests\n")
+                         "/help - get all available requests\n"
+                         "Помни - за тобой следят!")
+    pic_path = get_pictures()[0]
+    await bot.send_photo(message.chat.id, pic_path)
 
 
 @dp.message_handler(content_types=['text'], state=NameForm.await_name)
