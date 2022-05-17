@@ -10,7 +10,6 @@ from bottoken import token
 
 import psycopg2
 
-
 conn = psycopg2.connect(dbname='postgres', user='bot',
                         password='bot', host='localhost')
 cursor = conn.cursor()
@@ -23,8 +22,12 @@ commands = ['/help', '/start']
 
 
 class NameForm(StatesGroup):
+    # waiting for user to enter his/her/... name
     await_name = State()
-    all_commands = State()
+    # registered user, no active games == all set for a new game
+    all_set_for_game = State()
+    # registered user, active game
+    gaming = State()
 
 
 @dp.message_handler(commands="start")
@@ -86,7 +89,7 @@ async def name_getter(message: types.Message, state: FSMContext):
         await bot.send_message(message.from_user.id, 'Привет??')
         await bot.send_message(message.from_user.id, 'Неси свои проигрыши гордо под своим первым никнеймом, '
                                                      'мелкий угонщик')
-        # TODO можно проверить что был введен тот же никнейм и накатать другой месседж
+        # TODO check for same nickname as prev and create new shaming msg
 
     await state.finish()
 
@@ -110,7 +113,7 @@ async def echo_message(message: types.Message):
 
 
 if __name__ == "__main__":
-    # Запуск бота
+    # Start bot
     executor.start_polling(dp, skip_updates=True)
 
     cursor.close()
