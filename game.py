@@ -1,5 +1,4 @@
 import random
-
 from connections import bot, NameForm
 from aiogram import types
 from constants import TOTAL_CUP_NUM, BLACK_IN, THRESHOLD_STEP, THRESHOLD_SCORE, BLACK_IN_PROBABILITY, \
@@ -62,7 +61,7 @@ async def send_cup_pictures(user_id):
     :return: scores, black_info
     """
     # TODO: randomize black cup position (rn its always the last one, if any)
-
+    await bot.send_message(user_id, 'Жди, кружки уже в пути!! Тебе надо будет выбрать свою жертву, ловец!')
     black_in = random.random() < BLACK_IN_PROBABILITY
     # get randomized set of cups
     chosen_files = await get_pictures(TOTAL_CUP_NUM, black_in=black_in)  # [] of links
