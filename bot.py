@@ -147,7 +147,7 @@ async def echo_message_nogame_state(message: types.Message, state: FSMContext):
         :param message:
         :param state:
     """
-    await send_start_game_button(message.from_user.id, 'У тебя только один путь гордого самура - угон кружек')
+    await send_start_game_button(message.from_user.id, 'У тебя только один путь гордого самурая - угон кружек')
 
 
 @dp.message_handler(content_types=['text'], state=NameForm.gaming)
