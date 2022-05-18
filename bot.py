@@ -121,6 +121,18 @@ async def inline_kb_answer_callback_handler_new_game(query: types.CallbackQuery)
     await end_game(query.from_user.id)
 
 
+@dp.callback_query_handler(Text(contains='iter_game'), state=NameForm.gaming)
+async def inline_kb_answer_callback_handler_choose_cup(query: types.CallbackQuery):
+    # always answer callback queries, even if you have nothing to say
+    # TODO end game
+    await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+    await bot.delete_message(chat_id=query.from_user.id, message_id=query.message.message_id)
+    answer_data = query.data
+    # update_active_game(answer_data)
+
+
+
+
 def user_exists(user_id: str):
     cursor.execute('select * from cupbot.user where id = %s', [str(user_id)])
     users = cursor.fetchall()

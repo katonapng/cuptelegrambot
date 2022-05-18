@@ -1,0 +1,2 @@
+TOTAL_CUP_NUM = 3
+BLACK_IN = False
