@@ -1,8 +1,7 @@
 from aiogram import executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from disk import get_pictures
-from game import get_active_game_data, end_active_game, send_start_game_button, \
+from game import get_active_game_data, send_start_game_button, \
     send_end_game_button, start_game, end_game, update_active_game
 from connections import conn, cursor, bot, dp, NameForm
 
