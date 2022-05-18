@@ -97,6 +97,8 @@ async def send_inline_buttons_to_choose(user_id, scores, black_mask: list):
     row_btns = (types.InlineKeyboardButton(text, callback_data=data) for text, data in text_and_data)
     keyboard_markup.row(*row_btns)
 
+    await bot.send_message(user_id, "Выбирай свою цель, юный угонщик!", reply_markup=keyboard_markup)
+
 
 async def new_game_iteration(user_id):
     # cups = send_cup_pictures  тут будут возвращаться значения баллы/.... того что мы нарандомили для отправки
