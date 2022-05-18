@@ -64,6 +64,8 @@ async def name_getter(message: types.Message, state: FSMContext):
         else:
             await end_game(message.from_user.id)
 
+        await send_start_game_button(message.from_user.id, 'У тебя только один путь гордого самурая - угон кружек')
+
         # TODO check for same nickname as prev and create new shaming msg
 
 

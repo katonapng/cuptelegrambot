@@ -215,8 +215,8 @@ async def end_game(user_id: str):
     :param user_id:
     :return:
     """
-    await NameForm.all_set_for_game.set()
     await bot.send_message(user_id, 'Угонные победы ждут тебя!!')
-    # TODO end_active_game - change game status in db
     await end_active_game(user_id)
+
+    await NameForm.all_set_for_game.set()
     await send_start_game_button(user_id, 'Угон по расписанию')
