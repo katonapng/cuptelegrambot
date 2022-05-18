@@ -2,8 +2,8 @@ import random
 
 from connections import bot, NameForm
 from aiogram import types
-from constants import TOTAL_CUP_NUM, BLACK_IN, THRESHOLD_STEP, THRESHOLD_SCORE, BLACK_IN_PROBABILITY,\
-                      MIN_SCORE_FOR_CUP, MAX_SCORE_FOR_CUP
+from constants import TOTAL_CUP_NUM, BLACK_IN, THRESHOLD_STEP, THRESHOLD_SCORE, BLACK_IN_PROBABILITY, \
+    MIN_SCORE_FOR_CUP, MAX_SCORE_FOR_CUP
 from connections import conn, cursor
 
 from disk import get_pictures
@@ -11,11 +11,17 @@ from disk import get_pictures
 
 async def get_active_game_data(user_id: str):
     """
-    TODO create db select to find game id via user id
+    TODO fix return vals if game exists
     :param user_id:
     :return: game_id .... dict with game data
     """
-    return {}  # empty dict
+    cursor.execute('select * from cupbot.game where user_id = %s and is_active = %s',
+                   [str(user_id), True])
+    game = cursor.fetchall()
+    print(game)
+    if not game:
+        return {}
+    return game
 
 
 async def end_active_game(user_id: str):
@@ -26,7 +32,11 @@ async def end_active_game(user_id: str):
     """
     # game_id = get_active_game(user_id
     # upd in db game status - forward
-    pass
+    table_name = "cupbot.game"
+    cursor.execute("update %s set is_active = %%s where user_id = %%s and is_active = %%s" % table_name,
+                   [False, user_id, True])
+    conn.commit()
+
 
 
 async def update_active_game(user_id: str, answer_data: str):
@@ -41,7 +51,8 @@ async def update_active_game(user_id: str, answer_data: str):
     # end game
     # else:
     # new_game_iteration
-    pass
+    print("I reached update_active_game!")
+    await new_game_iteration(user_id)
 
 
 async def send_cup_pictures(user_id):
@@ -58,25 +69,39 @@ async def send_cup_pictures(user_id):
     # randomize scores for the cups (NB: if black_in, the last one is black)
     scores = [random.randint(MIN_SCORE_FOR_CUP, MAX_SCORE_FOR_CUP + 1) for _ in range(TOTAL_CUP_NUM)]
 
-    await bot.send_media_group(user_id, chosen_files)
-    black_info = {"black_in": black_in, "black_pos": TOTAL_CUP_NUM - 1}
-    return scores, black_info
+    for file in chosen_files:
+        #await bot.send_media_group(user_id, chosen_files)
+        await bot.send_photo(user_id, file)
+
+    black_pos = TOTAL_CUP_NUM - 1
+    black_mask = [1 if i == black_pos else 0 for i in range(TOTAL_CUP_NUM)]
+    return scores, black_mask
 
 
-async def send_inline_buttons_to_choose(user_id, black: dict):
-    # generate scores for basic cups
-    # black {black_in: bool
-    #        black_pos: int}
+async def send_inline_buttons_to_choose(user_id, scores, black_mask: list):
     # if black_in -> auto-fail
+
     # create buttons with text and hidden scores + UNIQUE KEY FOR BUTTON HANDLERS 'iter_button'
     # send buttons
-    pass
+    nums = ['первую!', 'вторую!', 'третью!']
+    keyboard_markup = types.InlineKeyboardMarkup(row_width=3)
+
+    text_and_data = [
+        ("Угнать " + nums[i],
+         "iter_game " + str(i) + " " + str(scores[i]) + " " + str(black_mask[i])
+         )
+        for i in range(TOTAL_CUP_NUM)
+    ]
+    # in real life for the callback_data the callback data factory should be used
+    # here the raw string is used for the simplicity
+    row_btns = (types.InlineKeyboardButton(text, callback_data=data) for text, data in text_and_data)
+    keyboard_markup.row(*row_btns)
 
 
 async def new_game_iteration(user_id):
     # cups = send_cup_pictures  тут будут возвращаться значения баллы/.... того что мы нарандомили для отправки
     scores, black_info = await send_cup_pictures(user_id)
-    await send_inline_buttons_to_choose(user_id, black_info)
+    await send_inline_buttons_to_choose(user_id, scores, black_info)
 
 
 async def send_start_game_button(user_id: str, message_text: str):
@@ -97,7 +122,7 @@ async def start_game(user_id: str):
     await NameForm.gaming.set()
     await bot.send_message(user_id, 'Дэмн, удачи!!')
     await create_game_in_db(user_id)
-    # new_game_iteration
+    await new_game_iteration(user_id)
     # TODO send cups and inline keyboard to select one of them
     # TODO send pics to start game == new_game_iteration
 
@@ -124,5 +149,5 @@ async def end_game(user_id: str):
     await NameForm.all_set_for_game.set()
     await bot.send_message(user_id, 'В следующий раз улов будет получше!!')
     # TODO end_active_game - change game status in db
+    await end_active_game(user_id)
     await send_start_game_button(user_id, 'Угон по расписанию')
-

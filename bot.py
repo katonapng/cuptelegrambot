@@ -64,7 +64,7 @@ async def name_getter(message: types.Message, state: FSMContext):
         if not await get_active_game_data(message.from_user.id):  # no active games  TODO check for empty dict
             await NameForm.all_set_for_game.set()
         else:
-            await end_active_game(message.from_user.id)
+            await end_game(message.from_user.id)
 
         # TODO check for same nickname as prev and create new shaming msg
 
