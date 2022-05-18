@@ -1,6 +1,6 @@
 import yadisk
 import random
-from bottoken import yadisk_token
+from src.bottoken import yadisk_token
 
 
 async def get_pictures(total_cup_num: int, black_in: bool):
