@@ -18,5 +18,5 @@ async def get_pictures(total_cup_num: int, black_in: bool):
     else:
         files_black = [f.file for f in y.listdir("/cupbot/black")]
         chosen_files = random.sample(files_A, k=total_cup_num - 1)
-        chosen_files.append(random.sample(files_black, k=1))
+        chosen_files.extend(random.sample(files_black, k=1))
     return chosen_files
