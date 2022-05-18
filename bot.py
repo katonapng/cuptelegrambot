@@ -107,6 +107,7 @@ async def inline_kb_answer_callback_handler_cup(query: types.CallbackQuery):
 async def inline_kb_answer_callback_handler_new_game(query: types.CallbackQuery):
     # always answer callback queries, even if you have nothing to say
     await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+    await bot.delete_message(chat_id=query.from_user.id, message_id=query.message.message_id)
     await start_game(query.from_user.id)
     # TODO send cups and inline keyboard to select one of them
 
@@ -116,6 +117,7 @@ async def inline_kb_answer_callback_handler_new_game(query: types.CallbackQuery)
     # always answer callback queries, even if you have nothing to say
     # TODO end game
     await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+    await bot.delete_message(chat_id=query.from_user.id, message_id=query.message.message_id)
     await end_game(query.from_user.id)
 
 

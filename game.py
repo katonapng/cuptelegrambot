@@ -42,11 +42,13 @@ async def start_game(user_id: str):
 
 
 async def end_game(user_id: str):
-    '''
+    """
     TODO change state and some support msg idk
     :param user_id:
     :return:
-    '''
+    """
     await NameForm.all_set_for_game.set()
     await bot.send_message(user_id, 'В следующий раз улов будет получше!!')
     # TODO end_active_game
+    await send_start_game_button(user_id, 'Угон по расписанию')
+
