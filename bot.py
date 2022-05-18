@@ -82,8 +82,7 @@ async def cmd_help(message: types.Message):
                          "/start - begin interaction\n"
                          "/help - get all available requests\n"
                          "Помни - за тобой следят!")
-    # pic_path = get_pictures()[0]
-    # await bot.send_photo(message.chat.id, pic_path)
+
 
 
 # EXAMPLE FOR FUTURE
