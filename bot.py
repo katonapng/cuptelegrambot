@@ -2,8 +2,8 @@ from aiogram import executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from disk import get_pictures
-from game import get_active_game, end_active_game, send_start_game_button, \
-    send_end_game_button
+from game import get_active_game_id, end_active_game, send_start_game_button, \
+    send_end_game_button, start_game, end_game
 from connections import conn, cursor, bot, dp, NameForm
 
 commands = ['/help', '/start']
@@ -50,9 +50,6 @@ async def name_getter(message: types.Message, state: FSMContext):
             cursor.execute("insert into %s values (%%s, %%s)" % table_name, [user_id, user_name])
             conn.commit()
 
-            # await bot.send_message(message.from_user.id, 'Привет, ' + message.text + ', начнем игру?)', reply_markup=keyboard_markup)
-            # await message.reply("Hi!\nWhich one?", reply_markup=keyboard_markup)
-
             await NameForm.all_set_for_game.set()
             await send_start_game_button(message.from_user.id, 'Привет, ' + message.text + ', начнем игру?)')
 
@@ -64,7 +61,7 @@ async def name_getter(message: types.Message, state: FSMContext):
         # TODO after restarting bot
         # if no active_games -> state game
         # if active_games -> standart function end_game: stop prev game + change state to all_set_for_game
-        if await get_active_game(message.from_user.id) == -1:  # no active games
+        if await get_active_game_id(message.from_user.id) == -1:  # no active games
             await NameForm.all_set_for_game.set()
         else:
             await end_active_game(message.from_user.id)
@@ -110,18 +107,16 @@ async def inline_kb_answer_callback_handler_cup(query: types.CallbackQuery):
 async def inline_kb_answer_callback_handler_new_game(query: types.CallbackQuery):
     # always answer callback queries, even if you have nothing to say
     await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
-
-    await NameForm.gaming.set()
-    await bot.send_message(query.from_user.id, 'Дэмн, удачи!!')
+    await start_game(query.from_user.id)
     # TODO send cups and inline keyboard to select one of them
 
 
 @dp.callback_query_handler(Text(equals='end_game'), state=NameForm.gaming)
 async def inline_kb_answer_callback_handler_new_game(query: types.CallbackQuery):
     # always answer callback queries, even if you have nothing to say
+    # TODO end game
     await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
-    await NameForm.all_set_for_game.set()
-    await bot.send_message(query.from_user.id, 'В следующий раз улов будет получше!!')
+    await end_game(query.from_user.id)
 
 
 def user_exists(user_id: str):
@@ -154,6 +149,14 @@ async def echo_message_game_state(message: types.Message, state: FSMContext):
         :param state:
     """
     await send_end_game_button(message.from_user.id, 'Угон не задался?')
+
+
+@dp.callback_query_handler(Text(contains=''), state='*')
+async def button_check(query: types.CallbackQuery):
+    # always answer callback queries, even if you have nothing to say
+    # TODO end game
+    await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+    await bot.send_message(query.from_user.id, 'Погоди, ты не туда тыкаешь')
 
 
 @dp.message_handler(content_types=['text'], state='*')

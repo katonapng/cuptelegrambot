@@ -2,9 +2,9 @@ from connections import bot, NameForm
 from aiogram import types
 
 
-async def get_active_game(user_id: str):
+async def get_active_game_id(user_id: str):
     """
-    TODO create db select
+    TODO create db select to find game id via user id
     :param user_id:
     :return: game_id
     """
@@ -13,7 +13,7 @@ async def get_active_game(user_id: str):
 
 async def end_active_game(user_id: str):
     """
-    TODO
+    TODO changes in db and some stat msg mb
     :param user_id:
     :return: end game score
     """
@@ -37,4 +37,16 @@ async def send_end_game_button(user_id: str, message_text: str):
 
 async def start_game(user_id: str):
     await NameForm.gaming.set()
-    # TODO send smt
+    await bot.send_message(user_id, 'Дэмн, удачи!!')
+    # TODO send pics to start game
+
+
+async def end_game(user_id: str):
+    '''
+    TODO change state and some support msg idk
+    :param user_id:
+    :return:
+    '''
+    await NameForm.all_set_for_game.set()
+    await bot.send_message(user_id, 'В следующий раз улов будет получше!!')
+    # TODO end_active_game
