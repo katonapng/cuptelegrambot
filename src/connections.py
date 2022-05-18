@@ -1,8 +1,9 @@
 import psycopg2
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from src.bottoken import token
 from aiogram.dispatcher.filters.state import State, StatesGroup
+
+from src.bottoken import token
 
 conn = psycopg2.connect(dbname='postgres', user='bot',
                         password='bot', host='localhost')

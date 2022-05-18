@@ -1,10 +1,12 @@
 import random
+
 from aiogram import types
+
+from src.connections import NameForm, bot, conn, cursor
+from src.constants import (BLACK_IN_PROBABILITY, MAX_SCORE_FOR_CUP,
+                           MIN_SCORE_FOR_CUP, THRESHOLD_SCORE, THRESHOLD_STEP,
+                           TOTAL_CUP_NUM)
 from src.disk import get_pictures
-from src.connections import conn, cursor, bot, NameForm
-from src.constants import TOTAL_CUP_NUM, THRESHOLD_STEP,\
-                      THRESHOLD_SCORE, BLACK_IN_PROBABILITY, \
-                      MIN_SCORE_FOR_CUP, MAX_SCORE_FOR_CUP
 
 
 async def get_active_game_data(user_id: str):
@@ -31,7 +33,6 @@ async def get_active_game_data(user_id: str):
 
 async def end_active_game(user_id: str):
     """
-    TODO changes in db and some stat msg mb
     :param user_id:
     :return: end game score
     """

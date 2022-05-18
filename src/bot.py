@@ -1,9 +1,10 @@
 from aiogram import executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from src.game import get_active_game_data, send_start_game_button, \
-    send_end_game_button, start_game, end_game, update_active_game
-from src.connections import conn, cursor, bot, dp, NameForm
+
+from src.connections import NameForm, bot, conn, cursor, dp
+from src.game import (end_game, get_active_game_data, send_end_game_button,
+                      send_start_game_button, start_game, update_active_game)
 
 commands = ['/help', '/start']
 
