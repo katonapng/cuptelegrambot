@@ -1,6 +1,6 @@
 from connections import bot, NameForm
 from aiogram import types
-from constants import TOTAL_CUP_NUM, BLACK_IN
+from constants import TOTAL_CUP_NUM, BLACK_IN, THRESHOLD_STEP, THRESHOLD_SCORE
 
 
 async def get_active_game_data(user_id: str):
@@ -77,7 +77,15 @@ async def send_end_game_button(user_id: str, message_text: str):
 async def start_game(user_id: str):
     await NameForm.gaming.set()
     await bot.send_message(user_id, 'Дэмн, удачи!!')
+    # game_id <- create_game_in_db
+    # new_game_iteration
+    # TODO send cups and inline keyboard to select one of them
     # TODO send pics to start game == new_game_iteration
+
+
+async def create_game_in_db(user_id: str):
+    # TODO add db insert
+    pass
 
 
 async def end_game(user_id: str):
