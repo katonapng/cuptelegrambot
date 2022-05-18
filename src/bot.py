@@ -1,5 +1,4 @@
 from aiogram import executor, types
-from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 
 from src.connections import NameForm, bot, conn, cursor, dp
@@ -11,12 +10,14 @@ commands = ['/help', '/start']
 
 @dp.message_handler(commands="start")
 async def cmd_start(message: types.Message):
-    """Function to handle /start command.
-    Greatings message and all available commands are sent
-    to the user.
-    Args:
-        message (types.Message): message sent by the user.
     """
+    Function to handle /start command.
+    Greetings message and all available commands are sent
+    to the user. Nickname is requested from the user.
+    :param message: types.Message, message sent by the user.
+    :return:
+    """
+
     await message.answer("Добро пожаловать на Ежегодный Съезд"
                          " Угонщиков Тар!\n"
                          "Хостит мероприятие лаборатория Биоинформатики"
@@ -32,18 +33,18 @@ async def cmd_start(message: types.Message):
 
 
 @dp.message_handler(content_types=['text'], state=NameForm.await_name)
-async def name_getter(message: types.Message, state: FSMContext):
-    """Function to handle random text messages.
-    Echo message is sent back to user.
-    Args:
-        message (types.Message): message sent by the user.
-        :param message:
-        :param state:
+async def name_getter(message: types.Message):
     """
+    Function to get the nickname of the user, which he/she/... sends
+    in reply to the request.
+    :param message: types.Message, message sent by the user.
+    :return:
+    """
+
     user_id = message.from_user.id
     user_name = message.text
 
-    if not user_exists(user_id):
+    if not await user_exists(user_id):
 
         if any(command in user_name for command in commands):
             await bot.send_message(
@@ -86,12 +87,14 @@ async def name_getter(message: types.Message, state: FSMContext):
 
 @dp.message_handler(commands="help", state='*')
 async def cmd_help(message: types.Message):
-    """Function to handle /help command.
+    """
+    Function to handle /help command.
     Message with all available commands is sent
     to the user.
-    Args:
-        message (types.Message): message sent by the user.
+    :param message: types.Message, message sent by the user
+    :return:
     """
+
     await message.answer("С координатором угонщиков диалог простой:\n"
                          "/start - начать угонную карьеру\n"
                          "/help - получить помощь тебе вряд ли удастся,"
@@ -114,21 +117,31 @@ async def cmd_help(message: types.Message):
     state=NameForm.all_set_for_game
 )
 async def inline_callback_handler_new_game(query: types.CallbackQuery):
+    """
+    Handler to manage start game inline button.
+    :param query: types.CallbackQuery.
+    :return:
+    """
+
+    # msg on top of the chat
     # always answer callback queries, even if you have nothing to say
-    await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+    await query.answer('')
     await bot.delete_message(
         chat_id=query.from_user.id,
         message_id=query.message.message_id
     )
-
     await start_game(query.from_user.id)
 
 
 @dp.callback_query_handler(Text(equals='end_game'), state=NameForm.gaming)
 async def inline_callback_handler_end_game(query: types.CallbackQuery):
-    # always answer callback queries, even if you have nothing to say
-    # TODO end game
-    await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+    """
+    Handler to manage end game inline button.
+    :param query: types.CallbackQuery.
+    :return:
+    """
+
+    await query.answer('')
     await bot.delete_message(
         chat_id=query.from_user.id,
         message_id=query.message.message_id
@@ -138,8 +151,13 @@ async def inline_callback_handler_end_game(query: types.CallbackQuery):
 
 @dp.callback_query_handler(Text(contains='iter_game'), state=NameForm.gaming)
 async def inline_callback_handler_choose_cup(query: types.CallbackQuery):
-    # always answer callback queries, even if you have nothing to say
-    await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+    """
+    Handler to manage end choose cup button.
+    :param query: types.CallbackQuery.
+    :return:
+    """
+
+    await query.answer('')
 
     await bot.delete_message(
         chat_id=query.from_user.id,
@@ -149,7 +167,14 @@ async def inline_callback_handler_choose_cup(query: types.CallbackQuery):
     await update_active_game(query.from_user.id, answer_data)
 
 
-def user_exists(user_id: str):
+async def user_exists(user_id: str):
+    """
+    Function to check if a user already used out bot
+    via his/her/... telegram id that we store in DB.
+    :param user_id: str, user's id.
+    :return:
+    """
+
     cursor.execute('select * from cupbot.user where id = %s', [str(user_id)])
     users = cursor.fetchall()
     if not users:
@@ -158,14 +183,14 @@ def user_exists(user_id: str):
 
 
 @dp.message_handler(content_types=['text'], state=NameForm.all_set_for_game)
-async def echo_message_nogame_state(message: types.Message, state: FSMContext):
-    """Function to handle random text messages in all_set_for_gae state
-    Start new game message is sent back to user.
-    Args:
-        message (types.Message): message sent by the user.
-        :param message:
-        :param state:
+async def echo_message_nogame_state(message: types.Message):
     """
+    Function to handle any text while in all_set_for_game State.
+    Offers the user to start a new game.
+    :param message: types.Message, message sent by the user.
+    :return:
+    """
+
     await send_start_game_button(
         message.from_user.id,
         'У тебя только один путь гордого самурая - угон кружек'
@@ -173,39 +198,43 @@ async def echo_message_nogame_state(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(content_types=['text'], state=NameForm.gaming)
-async def echo_message_game_state(message: types.Message, state: FSMContext):
-    """Function to handle random text messages in all_set_for_gae state
-    Start new game message is sent back to user.
-    Args:
-        message (types.Message): message sent by the user.
-        :param message:
-        :param state:
+async def echo_message_game_state(message: types.Message):
     """
+    Function to handle any text while in gaming State.
+    Offers the user to finish his/her/... current game.
+    :param message: types.Message, message sent by the user.
+    :return:
+    """
+
     await send_end_game_button(message.from_user.id, 'Угон не задался?')
 
 
 @dp.callback_query_handler(Text(contains=''), state='*')
 async def button_check(query: types.CallbackQuery):
-    # always answer callback queries, even if you have nothing to say
-    # TODO end game
-    await query.answer('')  # месседж вверху всплывающий, можно чет закинуть))
+    """
+    Function to react to the user pressing invalid button
+    for current state from previous conversation.
+    :param query: types.CallbackQuery.
+    :return:
+    """
+
+    await query.answer('')
     await bot.send_message(query.from_user.id, 'Погоди, ты не туда тыкаешь')
 
 
 @dp.message_handler(content_types=['text'], state='*')
-async def echo_message(message: types.Message, state: FSMContext):
-    """Function to handle random text messages.
-    Echo message is sent back to user.
-    Args:
-        message (types.Message): message sent by the user.
-        :param state:
+async def echo_message(message: types.Message):
     """
+    Function to react to the user sending us the text,
+    which previous handlers didn't catch. Just echoes it.
+    :param message: types.Message, message sent by the user.
+    :return:
+    """
+
     await bot.send_message(message.from_user.id, message.text)
 
 
 if __name__ == "__main__":
-    # Start bot
     executor.start_polling(dp, skip_updates=True)
-
     cursor.close()
     conn.close()

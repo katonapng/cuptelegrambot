@@ -11,9 +11,11 @@ from src.disk import get_pictures
 
 async def get_active_game_data(user_id: str):
     """
-    :param user_id:
-    :return: dict
+    Function to get user's active game data from DB.
+    :param user_id: str, ID of the user,
+    :return: dict with data.
     """
+
     cursor.execute(
         'select * from cupbot.game '
         'where user_id = %s and is_active = %s',
@@ -31,13 +33,14 @@ async def get_active_game_data(user_id: str):
     return game_data
 
 
-async def end_active_game(user_id: str):
+async def inactivate_game_db_rec(user_id: str):
     """
-    :param user_id:
-    :return: end game score
+    Function to update game status in DB,
+    setting it to False.
+    :param user_id: str, ID of the user,
+    :return: score at the end of the game.
     """
-    # game_id = get_active_game(user_id
-    # upd in db game status - forward
+
     table_name = "cupbot.game"
     cursor.execute(
         "update %s set is_active = %%s"
@@ -48,6 +51,14 @@ async def end_active_game(user_id: str):
 
 
 async def upd_game_db_rec(game_id: int, new_score: int, new_step_count: int):
+    """
+    Function to update game record in DB.
+    :param game_id: ID of the game to update,
+    :param new_score: incremented value of the score,
+    :param new_step_count: incremented value of the step count.
+    :return:
+    """
+
     table_name = "cupbot.game"
     cursor.execute(
         "update %s set curr_score = %%s,"
@@ -58,6 +69,14 @@ async def upd_game_db_rec(game_id: int, new_score: int, new_step_count: int):
 
 
 async def update_active_game(user_id: str, answer_data: str):
+    """
+    The main function to process each iteration of the
+    game (cup button is pressed).
+    :param user_id: str, ID of the user,
+    :param answer_data:
+    :return:
+    """
+
     game_data = await get_active_game_data(user_id)
     parsed_data = answer_data.split()
     cup_score = int(parsed_data[-2])
@@ -78,12 +97,13 @@ async def update_active_game(user_id: str, answer_data: str):
 
 
 async def check_end_game(game_data: dict, cup_score: int, cup_is_black: int):
-    '''
-    :param cup_is_black:
-    :param cup_score:
-    :param game_data:
-    :return: boolean
-    '''
+    """
+    Function to check if conditions to end the game are reached.
+    :param cup_is_black: bool, whether or not the black cup was chosen,
+    :param cup_score: score of the chosen cup,
+    :param game_data: game stats for previous iteration.
+    :return: dict with info for the next iteration.
+    """
 
     new_score = game_data['curr_score'] + cup_score
     new_step_count = game_data['step_count'] + 1
@@ -130,10 +150,11 @@ async def check_end_game(game_data: dict, cup_score: int, cup_is_black: int):
 
 async def send_cup_pictures(user_id):
     """
-    Send pics and return scores and info about presence of The Black Cup
-    :param user_id:
-    :return: scores, black_info
+    Send pics and return scores and info about presence of The Black Cup.
+    :param user_id: str, ID of the user,
+    :return: scores, black_info.
     """
+
     await bot.send_message(
         user_id,
         'Жди, кружки уже в пути!! Тебе надо будет выбрать свою жертву, ловец!'
@@ -154,13 +175,22 @@ async def send_cup_pictures(user_id):
         await bot.send_photo(user_id, file)
 
     black_pos = TOTAL_CUP_NUM - 1
-    black_mask = [1 if i == black_pos and black_in else 0
-                  for i in range(TOTAL_CUP_NUM)
-                  ]
+    black_mask = [
+        1 if i == black_pos and black_in else 0
+        for i in range(TOTAL_CUP_NUM)
+    ]
     return scores, black_mask
 
 
 async def send_inline_buttons_to_choose(user_id, scores, black_mask: list):
+    """
+    Function to create and sent inline buttons allowing to choose the cup.
+    :param user_id: str, ID of the user,
+    :param scores: scores of sent cups,
+    :param black_mask: mask to identify The Black Cup position.
+    :return:
+    """
+
     nums = ['первую!', 'вторую!', 'третью!']
     keyboard_markup = types.InlineKeyboardMarkup(row_width=3)
 
@@ -171,6 +201,7 @@ async def send_inline_buttons_to_choose(user_id, scores, black_mask: list):
          )
         for i in range(TOTAL_CUP_NUM)
     ]
+
     row_btns = (
         types.InlineKeyboardButton(text, callback_data=data)
         for text, data in text_and_data
@@ -185,11 +216,24 @@ async def send_inline_buttons_to_choose(user_id, scores, black_mask: list):
 
 
 async def new_game_iteration(user_id):
+    """
+    The most high-level function to process
+    game iterations.
+    :param user_id: str, ID of the user.
+    :return:
+    """
     scores, black_info = await send_cup_pictures(user_id)
     await send_inline_buttons_to_choose(user_id, scores, black_info)
 
 
 async def send_start_game_button(user_id: str, message_text: str):
+    """
+    Function which offers to start a new game by sending a button.
+    :param user_id: str, ID of the user,
+    :param message_text: message to send to the user.
+    :return:
+    """
+
     keyboard_markup = types.InlineKeyboardMarkup(row_width=3)
     keyboard_markup.row(
         types.InlineKeyboardButton(
@@ -201,6 +245,13 @@ async def send_start_game_button(user_id: str, message_text: str):
 
 
 async def send_end_game_button(user_id: str, message_text: str):
+    """
+    Function which offers to finish the current game by sending a button.
+    :param user_id: str, ID of the user,
+    :param message_text: message to send to the user.
+    :return:
+    """
+
     keyboard_markup = types.InlineKeyboardMarkup(row_width=3)
     keyboard_markup.row(
         types.InlineKeyboardButton(
@@ -213,20 +264,28 @@ async def send_end_game_button(user_id: str, message_text: str):
 
 
 async def start_game(user_id: str):
+    """
+    The function used at the very beginning of the
+    game. Sets the gaming State, wishes luck and
+    creates DB-record for the new game,
+    initiates first iteration.
+    :param user_id: str, ID of the user.
+    :return:
+    """
+
     await NameForm.gaming.set()
     await bot.send_message(user_id, 'Дэмн, удачи!!')
     await create_game_in_db(user_id)
     await new_game_iteration(user_id)
-    # TODO send cups and inline keyboard to select one of them
-    # TODO send pics to start game == new_game_iteration
 
 
 async def create_game_in_db(user_id: str):
     """
-    Initialize game
-    :param user_id:
+    Creates DB-record for the new game.
+    :param user_id: str, ID of the user.
     :return:
     """
+
     table_name = "cupbot.game"
     cursor.execute(
         "insert into %s (user_id, curr_score, step_count, is_active)"
@@ -238,12 +297,15 @@ async def create_game_in_db(user_id: str):
 
 async def end_game(user_id: str):
     """
-    TODO change state and some support msg idk
-    :param user_id:
+    The function used at the very end of the
+    game. Inactivates the game, sets the all_set_for_game State,
+    offers to start over again.
+    :param user_id: str, ID of the user.
     :return:
     """
+
     await bot.send_message(user_id, 'Угонные победы ждут тебя!!')
-    await end_active_game(user_id)
+    await inactivate_game_db_rec(user_id)
 
     await NameForm.all_set_for_game.set()
     await send_start_game_button(user_id, 'Угон по расписанию')

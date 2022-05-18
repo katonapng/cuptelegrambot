@@ -14,6 +14,11 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 class NameForm(StatesGroup):
+    """
+    Class containing all States
+    which bot and game share.
+    """
+
     # waiting for user to enter his/her/... name
     await_name = State()
     # registered user, no active games == all set for a new game
