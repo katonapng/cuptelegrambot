@@ -1,6 +1,7 @@
 from connections import bot, NameForm
 from aiogram import types
 from constants import TOTAL_CUP_NUM, BLACK_IN, THRESHOLD_STEP, THRESHOLD_SCORE
+from connections import conn, cursor
 
 
 async def get_active_game_data(user_id: str):
@@ -44,6 +45,7 @@ async def send_cup_pictures():
     pass
 
 
+
 async def send_inline_buttons_to_choose(user_id, black: dict):
     # generate scores for basic cups
     # black {black_in: bool
@@ -57,6 +59,7 @@ async def send_inline_buttons_to_choose(user_id, black: dict):
 async def new_game_iteration(user_id):
     # cups = send_cup_pictures  тут будут возвращаться значения баллы/.... того что мы нарандомили для отправки
     # send_inline_buttons_to_choose
+
     pass
 
 
@@ -77,15 +80,23 @@ async def send_end_game_button(user_id: str, message_text: str):
 async def start_game(user_id: str):
     await NameForm.gaming.set()
     await bot.send_message(user_id, 'Дэмн, удачи!!')
-    # game_id <- create_game_in_db
+    await create_game_in_db(user_id)
     # new_game_iteration
     # TODO send cups and inline keyboard to select one of them
     # TODO send pics to start game == new_game_iteration
 
 
 async def create_game_in_db(user_id: str):
-    # TODO add db insert
-    pass
+    """
+    Initialize game
+    :param user_id:
+    :return:
+    """
+    table_name = "cupbot.game"
+    cursor.execute(
+        "insert into %s (user_id, curr_score, step_count, is_active) values (%%s, %%s, %%s, %%s)" % table_name,
+        [user_id, 0, 0, True])
+    conn.commit()
 
 
 async def end_game(user_id: str):
