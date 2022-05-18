@@ -17,13 +17,12 @@ async def cmd_start(message: types.Message):
     Args:
         message (types.Message): message sent by the user.
     """
-    await message.answer("Welcome To The 75th Annual Hunger Games!\n"
-                         "Uh... I mean, wrong text, who gave me this?\n"
-                         "Welcome to the CupGame, of course!\n"
-                         "Let me dig up some useful information... "
-                         "Just a sec")
+    await message.answer("Добро пожаловать на Ежегодный Съезд Угонщиков Тар!\n"
+                         "Хостит мероприятие лаборатория Биоинформатики Политеха.. жесть, согласны\n"
+                         "Сейчас придумаю правила, пожалуй, в этот раз не во время игры. "
+                         "Секу ждемс")
     await cmd_help(message)
-    await message.answer("Введи свое имя")
+    await message.answer("Придумай погоняло и отправляйся на промысел. Погоняло в студию:")
 
     await NameForm.await_name.set()
 
@@ -43,7 +42,7 @@ async def name_getter(message: types.Message, state: FSMContext):
     if not user_exists(user_id):
 
         if any(command in user_name for command in commands):
-            await bot.send_message(message.from_user.id, 'Это команды, а я хочу от тебя имя')
+            await bot.send_message(message.from_user.id, 'Это команды, а я хочу от тебя погоняло')
             return
         else:
             table_name = "cupbot.user"
@@ -55,7 +54,7 @@ async def name_getter(message: types.Message, state: FSMContext):
 
     else:
         await bot.send_message(message.from_user.id, 'Привет??')
-        await bot.send_message(message.from_user.id, 'Неси свои проигрыши гордо под своим первым никнеймом, '
+        await bot.send_message(message.from_user.id, 'Неси свои проигрыши гордо под своим первым погонялом, '
                                                      'мелкий угонщик')
 
         # TODO after restarting bot
@@ -77,29 +76,16 @@ async def cmd_help(message: types.Message):
     Args:
         message (types.Message): message sent by the user.
     """
-    await message.answer("Here you go, all the requests you can ask of me\n"
-                         "If I'm in the mood, i shall answer you:\n"
-                         "/start - begin interaction\n"
-                         "/help - get all available requests\n"
-                         "Помни - за тобой следят!")
+    await message.answer("С координатором угонщиков диалог простой:\n"
+                         "/start - начать угонную карьеру\n"
+                         "/help - получить помощь тебе вряд ли удастся, но можешь попробовать.\n")
 
-
-
-# EXAMPLE FOR FUTURE
-@dp.callback_query_handler(Text(contains='hidden'), state=NameForm.gaming)
-async def inline_kb_answer_callback_handler_cup(query: types.CallbackQuery):
-    answer_data = query.data
-    # always answer callback queries, even if you have nothing to say
-    await query.answer(f'You answered with {answer_data!r}')
-
-    if answer_data == '1':
-        text = 'Great, me too!'
-    elif answer_data == '2':
-        text = 'Oh no...Why so?'
-    else:
-        text = f'Unexpected callback data {answer_data!r}!'
-
-    await bot.send_message(query.from_user.id, answer_data)
+    await message.answer("В лабе три главных правила:\n"
+                         "1. За одну вылазку - один угон.\n"
+                         "2. Количество вылазок ограничено.\n"
+                         "3. Угони достаточно, чтобы успеть опубликоваться за посланные свыше вылазки. \n\n"
+                         "Бди - кружки координаторов священны и неприкосновенны, за угон такой -- сразу бан.\n"
+                         "Помни - за тобой следят и демократии тут нет, поэтому все как я хочу.")
 
 
 @dp.callback_query_handler(Text(equals='start_new_game'), state=NameForm.all_set_for_game)
@@ -181,7 +167,7 @@ async def echo_message(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, message.text)
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     # Start bot
     executor.start_polling(dp, skip_updates=True)
 
