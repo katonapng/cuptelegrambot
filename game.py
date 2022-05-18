@@ -2,13 +2,13 @@ from connections import bot, NameForm
 from aiogram import types
 
 
-async def get_active_game_id(user_id: str):
+async def get_active_game_data(user_id: str):
     """
     TODO create db select to find game id via user id
     :param user_id:
-    :return: game_id
+    :return: game_id .... dict with game data
     """
-    return -1
+    return {}  # empty dict
 
 
 async def end_active_game(user_id: str):

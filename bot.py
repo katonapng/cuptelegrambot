@@ -2,7 +2,7 @@ from aiogram import executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from disk import get_pictures
-from game import get_active_game_id, end_active_game, send_start_game_button, \
+from game import get_active_game_data, end_active_game, send_start_game_button, \
     send_end_game_button, start_game, end_game
 from connections import conn, cursor, bot, dp, NameForm
 
@@ -61,7 +61,7 @@ async def name_getter(message: types.Message, state: FSMContext):
         # TODO after restarting bot
         # if no active_games -> state game
         # if active_games -> standart function end_game: stop prev game + change state to all_set_for_game
-        if await get_active_game_id(message.from_user.id) == -1:  # no active games
+        if not await get_active_game_data(message.from_user.id):  # no active games  TODO check for empty dict
             await NameForm.all_set_for_game.set()
         else:
             await end_active_game(message.from_user.id)
