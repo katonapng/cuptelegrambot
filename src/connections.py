@@ -1,8 +1,9 @@
 import psycopg2
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from bottoken import token
 from aiogram.dispatcher.filters.state import State, StatesGroup
+
+from src.bottoken import token
 
 conn = psycopg2.connect(dbname='postgres', user='bot',
                         password='bot', host='localhost')
@@ -13,6 +14,11 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 class NameForm(StatesGroup):
+    """
+    Class containing all States
+    which bot and game share.
+    """
+
     # waiting for user to enter his/her/... name
     await_name = State()
     # registered user, no active games == all set for a new game

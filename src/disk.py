@@ -1,18 +1,24 @@
-import yadisk
 import random
-from bottoken import yadisk_token
+
+import yadisk
+
+from src.bottoken import yadisk_token
 
 
 async def get_pictures(total_cup_num: int, black_in: bool):
     """
-
-    :param total_cup_num:
-    :param black_in:
-    :return: list of download-links
+    Connects to Yandex.Disk via token, randomly chooses
+    total_cup_num cup-pics and returns us
+    download-links.
+    :param total_cup_num: int, number of cups,
+    :param black_in: bool, whether to include
+                     the black cup or not,
+    :return: list of download-links.
     """
+
     y = yadisk.YaDisk(token=yadisk_token)
     files_A = [f.file for f in y.listdir("/cupbot/A")]
-    # randomize what cups to send
+    # randomize which cups to send
     if not black_in:
         chosen_files = random.sample(files_A, k=total_cup_num)
     else:
